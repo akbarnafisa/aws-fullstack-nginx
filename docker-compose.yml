@@ -1,0 +1,33 @@
+version: "3.8"
+name: aws-fullstack-nginx
+services:
+
+  nginx:
+    restart: unless-stopped
+    # build:
+    #   context: .
+    #   dockerfile: ./Dockerfile
+    image: nginx:stable-alpine3.17
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      # connect nginx to Backend project
+      - nginx.docker
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./config/nginx/sites-prod/client.conf:/etc/nginx/sites-enabled/client.conf
+      - ./config/certbot/conf:/etc/letsencrypt
+      - ./config/certbot/www:/var/www/certbot
+
+  certbot:
+    image: certbot/certbot:v1.14.0
+    volumes:
+      - ./config/certbot/conf:/etc/letsencrypt
+      - ./config/certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email {email} -d {api} --agree-tos
+
+networks:
+  nginx.docker:
+    name: nginx.docker
+    external: true
